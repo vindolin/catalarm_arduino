@@ -128,10 +128,6 @@ void setup(){
         request->send(SPIFFS, "/favicon.ico");
     });
 
-    server.on("/opfa.jpg", HTTP_ANY, [](AsyncWebServerRequest *request){
-        request->send(SPIFFS, "/opfa.jpg");
-    });
-
     // attach filesystem root at URL /fs
     server.serveStatic("/fs", SPIFFS, "/");
 
