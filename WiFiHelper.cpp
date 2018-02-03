@@ -1,5 +1,3 @@
-#include <Arduino.h>
-#include <WiFi.h>
 #include "WiFiHelper.h"
 
 bool has_text(String needle, String haystack) {
