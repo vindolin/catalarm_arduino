@@ -8,11 +8,4 @@ typedef struct {
   char *password;
 } Network;
 
-
 bool wifiConnect(int num_networks, Network *networks);
-
-// class WiFiHelper {
-//   public:
-//     WiFiHelper();
-//     bool connect(int num_networks, Network *networks);
-// };

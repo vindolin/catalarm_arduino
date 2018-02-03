@@ -53,12 +53,3 @@ bool wifiConnect(int num_networks, Network *networks) {
     }
     return false;
 }
-
-
-// WiFiHelper::WiFiHelper()
-// {
-// }
-
-// bool WiFiHelper::connect(int num_networks, Network *networks) {
-// ....
-// }
