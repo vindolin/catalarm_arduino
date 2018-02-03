@@ -23,8 +23,6 @@ const int pin_sensor_led = 19;
 const int pin_buzzer = 22;
 const int pin_status_led = 21;
 
-const int wifi_num_retries = 5;
-
 volatile bool movement_flag;
 
 bool buzzer_enabled = true;
