@@ -1,6 +1,6 @@
 #include <WiFi.h>
 
-bool has_text(String needle, String haystack);
+bool _has_text(String needle, String haystack);
 
 typedef struct {
   char *ssid;

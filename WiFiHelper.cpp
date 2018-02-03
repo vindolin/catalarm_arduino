@@ -1,6 +1,6 @@
 #include "WiFiHelper.h"
 
-bool has_text(String needle, String haystack) {
+bool _has_text(String needle, String haystack) {
   int foundpos = -1;
   for (int i = 0; i <= haystack.length() - needle.length(); i++) {
     if (haystack.substring(i, needle.length() + i) == needle) {
@@ -32,7 +32,7 @@ bool wifiConnect(int num_networks, Network *networks) {
         for (int n = 0; n < num_networks; n++) {
             for (int i = 0; i < num_wifi; ++i) {
                 // look if one of the found wifis matches one of our networkds
-                if(! has_text(WiFi.SSID(i), networks[n].ssid))
+                if(! _has_text(WiFi.SSID(i), networks[n].ssid))
                     continue;
 
                 Serial.printf("Trying: %s\n", networks[n].ssid);
