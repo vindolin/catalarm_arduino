@@ -6,8 +6,12 @@
 #include "Networks.h"
 
 AsyncWebServer server(80);
-AsyncEventSource events("/events"); // event source (Server-Sent events)
 
+// the EventSource back channel for notifying the clients when an alarm happens
+// and to synchronize the gui widget
+AsyncEventSource events("/events");
+
+// buzzer sequences, odd = on duration, even = off duration
 int alarm_sequence[4] = {100, 100, 100, 0};
 int enable_sequence[6] = {50, 50, 50, 50, 50, 0};
 int disable_sequence[6] = {50, 50, 50, 50, 200, 0};
@@ -38,10 +42,6 @@ void beepSequence(int sequence[], int length) {
     }
 }
 
-void on_movement() {
-    movement_flag = true;
-}
-
 void send_status_event() {
   events.send(buzzer_enabled ? "true" : "false", "status");
 }
@@ -62,8 +62,12 @@ void setup(){
     Serial.begin(115200);
     Serial.printf("starting up...\n");
 
-    attachInterrupt(digitalPinToInterrupt(pin_sensor), on_movement, CHANGE);
+    // when the movement sensor fires, set a flag that gets handled in the loop function
+    attachInterrupt(digitalPinToInterrupt(pin_sensor), []() {
+        movement_flag = true;
+    }, CHANGE);
 
+    // try to connect to a wifi until one works
     while(true) {
         if(wifiConnect(num_networks, networks)) {
             beepSequence(connect_success_sequence, 6);
@@ -74,6 +78,7 @@ void setup(){
         delay(5);
     }
 
+    // start the SPIFFS fs where our static files are located
     if(!SPIFFS.begin(true)){
         Serial.println("SPIFFS Mount Failed");
         return;
@@ -82,12 +87,12 @@ void setup(){
     // attach AsyncEventSource
     server.addHandler(&events);
 
-    // respond to GET requests on URL /heap
+    // show free heap
     server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", String(ESP.getFreeHeap()));
     });
 
-    // enable the beeper
+    // enable the buzzer
     server.on("/enable", HTTP_GET, [](AsyncWebServerRequest *request){
         buzzer_enabled = true;
         beepSequence(enable_sequence, 6);
@@ -95,7 +100,7 @@ void setup(){
         send_status_event();
     });
 
-    // enable the beeper
+    // disable the buzzer
     server.on("/disable", HTTP_GET, [](AsyncWebServerRequest *request){
         buzzer_enabled = false;
         beepSequence(disable_sequence, 6);
@@ -103,31 +108,37 @@ void setup(){
         send_status_event();
     });
 
+    // return if the buzzer is enabled or not
     server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", buzzer_enabled ? "true" : "false");
     });
 
+    // map / to index.htm
     server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
         request->send(SPIFFS, "/index.htm");
     });
 
+    // hello kitty!
     server.on("/favicon.ico", HTTP_ANY, [](AsyncWebServerRequest *request){
         request->send(SPIFFS, "/favicon.ico");
     });
 
     server.onNotFound(onRequest);
 
+    // this is needed for the events to work on index.htm in file:/// mode, when developing
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
     server.begin();
 
     digitalWrite(pin_status_led, HIGH);
-
 }
 
 void loop(){
+
+    // this flag is set by the interrupt routine
     if(movement_flag) {
         Serial.println("movement");
 
+        // make some noise if there is a kitty in front of the sensor
         if(digitalRead(pin_sensor)) {
             events.send("movement", "movement");
             digitalWrite(pin_sensor_led, HIGH);
