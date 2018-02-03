@@ -105,6 +105,8 @@ body {
 </style>
 
 <script>
+// lots of things here only work with an ES6 capable browser (Firefox, Chrome)
+
 var local_ip = '192.168.178.126';  // used while developing this file and opening it from file:///home/me/project/index.htm
 var host = location.hostname == '' ? local_ip : location.host;
 
@@ -125,12 +127,13 @@ function setup_action(checkbox) {
     });
 }
 
+// flash the background when an alram is reported by an event
 function flash_alarm() {
     var old_background = document.documentElement.style.background;
     document.documentElement.style.background = 'red';
     setTimeout(function() {
         document.documentElement.style.background = old_background;
-    }, 100);
+    }, 200);
 }
 
 window.addEventListener('load', function() {
@@ -138,7 +141,7 @@ window.addEventListener('load', function() {
 
     get(`http://${host}/status`)
     .then((data) => {
-        document.getElementById('container').style.display = 'flex';
+        document.getElementById('container').style.display = 'flex';  // show container
         checkbox.checked = data == 'true';
 
         setup_action(checkbox);
@@ -147,16 +150,15 @@ window.addEventListener('load', function() {
         console.error(err);
     });
 
-    // var evtSource = new EventSource(`http://${host}/events`, {withCredentials: true});
     var evtSource = new EventSource(`http://${host}/events`);
 
     evtSource.addEventListener('status', (event) => {
         checkbox.checked = event.data == 'true';
-        console.log(`Message: ${event.data}`);
+        console.log(`status: ${event.data}`);
     }, false);
 
     evtSource.addEventListener('movement', (event) => {
-        console.log(`Message: ${event.data}`);
+        console.log(`movement: ${event.data}`);
         flash_alarm();
     }, false);
 
