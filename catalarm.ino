@@ -29,7 +29,7 @@ void onRequest(AsyncWebServerRequest *request){
   request->send(404);
 }
 
-void beepSequence(int sequence[], int length) {
+void buzzerSequence(int sequence[], int length) {
     for (int i = 0; i < length / 2; i++) {
         digitalWrite(pin_buzzer, HIGH);
         delay(sequence[i * 2]);
@@ -53,7 +53,7 @@ void setup(){
     digitalWrite(pin_buzzer, LOW);
     digitalWrite(pin_status_led, LOW);
 
-    beepSequence(alarm_sequence, 4);
+    buzzerSequence(alarm_sequence, 4);
 
     Serial.begin(115200);
     Serial.printf("starting up...\n");
@@ -66,10 +66,10 @@ void setup(){
     // try to connect to a wifi until one works
     while(true) {
         if(wifiConnect(num_networks, networks)) {
-            beepSequence(connect_success_sequence, 6);
+            buzzerSequence(connect_success_sequence, 6);
             break;
         } else {
-            beepSequence(connect_fail_sequence, 6);
+            buzzerSequence(connect_fail_sequence, 6);
         }
         delay(5);
     }
@@ -91,7 +91,7 @@ void setup(){
     // enable the buzzer
     server.on("/enable", HTTP_GET, [](AsyncWebServerRequest *request){
         buzzer_enabled = true;
-        beepSequence(enable_sequence, 6);
+        buzzerSequence(enable_sequence, 6);
         request->send(200, "text/plain", "ok");
         send_status_event();
     });
@@ -99,7 +99,7 @@ void setup(){
     // disable the buzzer
     server.on("/disable", HTTP_GET, [](AsyncWebServerRequest *request){
         buzzer_enabled = false;
-        beepSequence(disable_sequence, 6);
+        buzzerSequence(disable_sequence, 6);
         request->send(200, "text/plain", "ok");
         send_status_event();
     });
@@ -139,7 +139,7 @@ void loop(){
             events.send("movement", "movement");
             digitalWrite(pin_sensor_led, HIGH);
             if(buzzer_enabled)
-                beepSequence(alarm_sequence, 4);
+                buzzerSequence(alarm_sequence, 4);
         } else {
             digitalWrite(pin_sensor_led, LOW);
         }
