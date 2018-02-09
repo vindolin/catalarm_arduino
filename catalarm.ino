@@ -1,12 +1,14 @@
 #include <ESPAsyncWebServer.h>
 #include <SPIFFS.h>
+#include <HTTPClient.h>
 #include "WiFiHelper.h"
 #include "Networks.h"
 
 AsyncWebServer server(80);
+HTTPClient http;
 
 // the EventSource back channel for notifying the clients when an alarm happens
-// and to synchronize the gui widget
+// and to synchronize the gui widgets
 AsyncEventSource events("/events");
 
 // buzzer sequences, odd = on duration, even = off duration
@@ -24,6 +26,8 @@ const int pin_status_led = 21;
 volatile bool movement_flag;
 
 bool buzzer_enabled = true;
+bool im_enabled = false;
+char state_buffer[64];
 
 void onRequest(AsyncWebServerRequest *request){
   request->send(404);
@@ -38,8 +42,15 @@ void buzzerSequence(int sequence[], int length) {
     }
 }
 
-void send_status_event() {
-  events.send(buzzer_enabled ? "true" : "false", "status");
+void send_state_event() {
+    sprintf(
+        state_buffer,
+        "{\"buzzer\": %s, \"im\": %s}",
+        buzzer_enabled ? "true" : "false",
+        im_enabled ? "true" : "false"
+    );
+
+    events.send(state_buffer, "state");
 }
 
 void setup(){
@@ -89,24 +100,61 @@ void setup(){
     });
 
     // enable the buzzer
-    server.on("/enable", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/enable_buzzer", HTTP_GET, [](AsyncWebServerRequest *request){
         buzzer_enabled = true;
         buzzerSequence(enable_sequence, 6);
         request->send(200, "text/plain", "ok");
-        send_status_event();
+        send_state_event();
     });
 
     // disable the buzzer
-    server.on("/disable", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/disable_buzzer", HTTP_GET, [](AsyncWebServerRequest *request){
         buzzer_enabled = false;
         buzzerSequence(disable_sequence, 6);
         request->send(200, "text/plain", "ok");
-        send_status_event();
+        send_state_event();
     });
 
-    // return if the buzzer is enabled or not
-    server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/plain", buzzer_enabled ? "true" : "false");
+    // turn im messenging on/off
+    server.on("/enable_im", HTTP_GET, [](AsyncWebServerRequest *request){
+        im_enabled = true;
+        buzzerSequence(enable_sequence, 6);
+        request->send(200, "text/plain", "ok");
+        send_state_event();
+    });
+
+    // disable im
+    server.on("/disable_im", HTTP_GET, [](AsyncWebServerRequest *request){
+        buzzer_enabled = false;
+        buzzerSequence(disable_sequence, 6);
+        request->send(200, "text/plain", "ok");
+        send_state_event();
+    });
+
+    // return the state for buzzer/im
+    server.on("/get_state", HTTP_GET, [](AsyncWebServerRequest *request){
+        sprintf(
+            state_buffer,
+            "{\"buzzer\": %s, \"im\": %s}",
+            buzzer_enabled ? "true" : "false",
+            im_enabled ? "true" : "false"
+        );
+        request->send(200, "application/json", state_buffer);
+    });
+
+    // set state
+    server.on("/set_state", HTTP_GET, [](AsyncWebServerRequest *request){
+        if(request->hasParam("im")) {
+            im_enabled = String(request->getParam("im")->value()) == "true";
+        }
+
+        if(request->hasParam("buzzer")) {
+            buzzer_enabled = String(request->getParam("buzzer")->value()) == "true";
+        }
+
+        Serial.printf("Buzzer (%s) IM (%S)\n", buzzer_enabled?"on":"off", im_enabled?"on":"off");
+        request->send(200, "text/plain", "ok");
+        send_state_event();
     });
 
     // map / to index.htm
@@ -128,21 +176,36 @@ void setup(){
     digitalWrite(pin_status_led, HIGH);
 }
 
+void handle_alarm() {
+    Serial.println("movement");
+
+    // make some noise if there is a kitty in front of the sensor
+    if(digitalRead(pin_sensor)) {
+        events.send("movement", "movement");
+
+        digitalWrite(pin_sensor_led, HIGH);
+        if(buzzer_enabled) {
+            buzzerSequence(alarm_sequence, 4);
+        }
+
+        if(im_enabled) {
+            // talk to telegram through https://github.com/vindolin/https_relay
+            http.begin("http://vault:8077/botXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/sendMessage");
+            http.addHeader("X-Relay-Target", "api.telegram.org");
+            int httpCode = http.POST("chat_id=XXXXXXXXX&text=Katzenalarm!!");
+            http.end();
+        }
+
+    } else {
+        digitalWrite(pin_sensor_led, LOW);
+    }
+}
+
 void loop(){
 
     // this flag is set by the interrupt routine
     if(movement_flag) {
-        Serial.println("movement");
-
-        // make some noise if there is a kitty in front of the sensor
-        if(digitalRead(pin_sensor)) {
-            events.send("movement", "movement");
-            digitalWrite(pin_sensor_led, HIGH);
-            if(buzzer_enabled)
-                buzzerSequence(alarm_sequence, 4);
-        } else {
-            digitalWrite(pin_sensor_led, LOW);
-        }
+        handle_alarm();
         movement_flag = false;
     }
 

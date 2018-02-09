@@ -6,82 +6,123 @@
 
 <style>
 
-input[type=checkbox] {
-  position: absolute;
-  opacity: 0;
+
+.switch {
+    /*transform: scale(4.0);*/
+    font-family: Arial, Helvetica, sans-serif;
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    width: 396px;
+    height: 89px;
+    padding: 12px;
+    background-color: white;
+    border-radius: 72px;
+    box-shadow: inset 0 -4px white, inset 0 4px 4px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    background-image: linear-gradient(to bottom, #eeeeee, white 25px);
 }
 
-.ckbx-style-8 {
-  font-size: 24px;
+.switch-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
 }
 
-.ckbx-style-8 input[type=checkbox] {
-  position: absolute;
-  opacity: 0;
+.switch-label {
+    position: relative;
+    display: block;
+    height: inherit;
+    font-size: 40px;
+    text-transform: uppercase;
+    background: #eceeef;
+    border-radius: inherit;
+    box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.12), inset 0 0 8px rgba(0, 0, 0, 0.15);
+    transition: 0.15s ease-out;
+    transition-property: opacity background;
+}
+.switch-label:before, .switch-label:after {
+    position: absolute;
+    top: 50%;
+    margin-top: -.5em;
+    line-height: 1;
+    transition: inherit;
+}
+.switch-label:before {
+    content: attr(data-off);
+    left: 88px;
+    color: #aaa;
+    text-shadow: 0 4px rgba(255, 255, 255, 0.5);
+}
+.switch-label:after {
+    content: attr(data-on);
+    right: 88px;
+    color: white;
+    text-shadow: 0 4px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+}
+.switch-input:checked ~ .switch-label {
+    background: #47a8d8;
+    box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.15), inset 0 0 12px rgba(0, 0, 0, 0.2);
+}
+.switch-input:checked ~ .switch-label:before {
+    opacity: 0;
+}
+.switch-input:checked ~ .switch-label:after {
+    opacity: 1;
 }
 
-.ckbx-style-8 label {
-  width: 2em;
-  height: 1em;
-  position: relative;
-  cursor: pointer;
-  display: block;
+.switch-handle {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 72px;
+    height: 72px;
+    background: white;
+    border-radius: 40px;
+    box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.2);
+    background-image: linear-gradient(to bottom, white 40%, #f0f0f0);
+    transition: left 0.15s ease-out;
+}
+.switch-handle:before {
+    /*display:none;*/
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -24px 0 0 -24px;
+    width: 48px;
+    height: 48px;
+    background: #f9f9f9;
+    border-radius: 24px;
+    box-shadow: inset 0 4px rgba(0, 0, 0, 0.02);
+    background-image: linear-gradient(to bottom, #eeeeee, white);
+}
+.switch-input:checked ~ .switch-handle {
+    left: 328px;
+    box-shadow: -4px 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-.ckbx-style-8 label:before {
-  content: '';
-  position: absolute;
-  width: 2em;
-  height: 1em;
-  left: 0.1em;
-  transition: background 0.1s ease;
-  background: #800040;
-  border-radius: 250px;
-  box-shadow: inset 0 2px 2px rgba(255,255,255, 0.2);
+.switch-buzzer > .switch-input:checked ~ .switch-label {
+    background: #14BC1F;
 }
-
-.ckbx-style-8 label:after {
-  content: '';
-  position: absolute;
-  width: 1em;
-  height: 1em;
-  border-radius: 250px;
-  left: 0;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.4);
-  background: #fcfff4;
-  animation: switch-off .2s ease-out;
-  z-index: 2;
-}
-
-.ckbx-style-8 input[type=checkbox]:checked + label:before {
-  background: #007580;
-  box-shadow: inset 0px 1px 1px rgba(255,255,255, 0.2);
-}
-
-.ckbx-style-8 input[type=checkbox]:checked + label:after {
-  animation: switch-on .2s ease-out;
-  left: 1.1em;
-}
-
-[class^=ckbx].ckbx-xxlarge {
-  font-size: 20em;
+.switch-im > .switch-input:checked ~ .switch-label {
+    background: #BC1423;
 }
 
 .flex-container {
+    padding-top:40px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     flex-wrap: nowrap;
-    justify-content: center;
+    justify-content: flex-start;
     align-content: stretch;
-    align-items: flex-start;
-    height:500px;
+    align-items: center;
 }
 
-.flex-item:nth-child(1) {
-    order: 0;
-    flex: 0 1 auto;
-    align-self: center;
+.flex-item:not(:last-child) {
+    margin-bottom: 18px;
 }
 
 html {
@@ -105,56 +146,81 @@ body {
 </style>
 
 <script>
-// lots of things here only work with an ES6 capable browser (Firefox, Chrome)
-
-var local_ip = '192.168.178.126';  // used while developing this file and opening it from file:///home/me/project/index.htm
-var host = location.hostname == '' ? local_ip : location.host;
-
-function get(url) {
-    return new Promise((resolve, reject) => {
-        const req = new XMLHttpRequest();
-        req.open('GET', url);
-        req.onload = () => req.status === 200 ? resolve(req.response) : reject(Error(req.statusText));
-        req.onerror = (e) => reject(Error(`Network Error: ${e}`));
-        req.send();
-    });
-}
-
-function setup_action(checkbox) {
-    checkbox.addEventListener('change', function() {
-        var action = this.checked ? 'enable' : 'disable';
-        get(`http://${host}/${action}`)
-    });
-}
-
-// flash the background when an alram is reported by an event
-function flash_alarm() {
-    var old_background = document.documentElement.style.background;
-    document.documentElement.style.background = 'red';
-    setTimeout(function() {
-        document.documentElement.style.background = old_background;
-    }, 200);
-}
-
 window.addEventListener('load', function() {
-    var checkbox = document.getElementById('alarm_checkbox');
+    // lots of things here only work with an ES6 capable browser (Firefox, Chrome)
 
-    get(`http://${host}/status`)
+    const local_ip = '192.168.178.126';  // used while developing this file and opening it from file:///home/me/project/index.htm
+    const host = location.hostname == '' ? local_ip : location.host;
+
+    var state;
+
+    const checkbox_buzzer = document.querySelector('.switch-buzzer input[type=checkbox]');
+    const checkbox_im = document.querySelector('.switch-im input[type=checkbox]');
+    const evtSource = new EventSource(`http://${host}/events`);
+
+    function get(url) {
+        return new Promise((resolve, reject) => {
+            const req = new XMLHttpRequest();
+            req.open('GET', url);
+            req.onload = () => req.status === 200 ? resolve(req.response) : reject(Error(req.statusText));
+            req.onerror = (e) => reject(Error(`Network Error: ${e}`));
+            req.send();
+        });
+    }
+
+    function update_inputs() {
+        checkbox_buzzer.checked = state.buzzer;
+        checkbox_im.checked = state.im;
+    }
+
+    function set_state() {
+        state.buzzer = checkbox_buzzer.checked;
+        state.im = checkbox_im.checked;
+
+        get(`http://${host}/set_state?buzzer=${state.buzzer}&im=${state.im}`)
+    }
+
+    function setup_events(checkbox) {
+        for(var checkbox of document.getElementsByClassName('switch-input')) {
+            checkbox.addEventListener('change', function() {
+                set_state();
+            });
+        }
+    }
+
+    // flash the background when an alram is reported by an event
+    function flash_alarm() {
+        var old_background = document.documentElement.style.background;
+
+        // make background red
+        document.documentElement.style.background = 'red';
+
+        // restore background
+        setTimeout(function() {
+            document.documentElement.style.background = old_background;
+        }, 200);
+    }
+
+    // get the initial state
+    get(`http://${host}/get_state`)
     .then((data) => {
         document.getElementById('container').style.display = 'flex';  // show container
-        checkbox.checked = data == 'true';
 
-        setup_action(checkbox);
+        state = JSON.parse(data)
+
+        checkbox_buzzer.checked = state['buzzer'];
+        checkbox_im.checked = state['im'];
+
+        setup_events();
     })
     .catch((err) => {
         console.error(err);
     });
 
-    var evtSource = new EventSource(`http://${host}/events`);
-
-    evtSource.addEventListener('status', (event) => {
-        checkbox.checked = event.data == 'true';
-        console.log(`status: ${event.data}`);
+    evtSource.addEventListener('state', (event) => {
+        state = JSON.parse(event.data);
+        update_inputs();
+        console.log('state event:', state);
     }, false);
 
     evtSource.addEventListener('movement', (event) => {
@@ -172,10 +238,18 @@ window.addEventListener('load', function() {
 <body>
 <div id="container" class="flex-container" style="display:none;">
     <div class="flex-item">
-        <div class="ckbx-style-8 ckbx-xxlarge">
-            <input type="checkbox" id="alarm_checkbox" value="0" name="ckbx-style-1">
-            <label for="alarm_checkbox"></label>
-        </div>
+        <label class="switch switch-buzzer">
+            <input type="checkbox" class="switch-input">
+            <span class="switch-label" data-on="buzzer on" data-off="buzzer off"></span>
+            <span class="switch-handle"></span>
+        </label>
+    </div>
+    <div class="flex-item">
+        <label class="switch switch-im">
+            <input type="checkbox" class="switch-input">
+            <span class="switch-label" data-on="message on" data-off="message off"></span>
+            <span class="switch-handle"></span>
+        </label>
     </div>
 </div>
 </body>
