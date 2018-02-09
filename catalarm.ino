@@ -13,8 +13,7 @@ AsyncEventSource events("/events");
 
 // buzzer sequences, odd = on duration, even = off duration
 int alarm_sequence[4] = {100, 100, 100, 0};
-int enable_sequence[6] = {50, 50, 50, 50, 50, 0};
-int disable_sequence[6] = {50, 50, 50, 50, 200, 0};
+int set_state_sequence[6] = {50, 50, 50, 50, 50, 0};
 int connect_success_sequence[6] = {50, 50, 50, 50, 50, 50};
 int connect_fail_sequence[6] = {200, 50, 200, 50, 200, 50};
 
@@ -99,38 +98,6 @@ void setup(){
         request->send(200, "text/plain", String(ESP.getFreeHeap()));
     });
 
-    // enable the buzzer
-    server.on("/enable_buzzer", HTTP_GET, [](AsyncWebServerRequest *request){
-        buzzer_enabled = true;
-        buzzerSequence(enable_sequence, 6);
-        request->send(200, "text/plain", "ok");
-        send_state_event();
-    });
-
-    // disable the buzzer
-    server.on("/disable_buzzer", HTTP_GET, [](AsyncWebServerRequest *request){
-        buzzer_enabled = false;
-        buzzerSequence(disable_sequence, 6);
-        request->send(200, "text/plain", "ok");
-        send_state_event();
-    });
-
-    // turn im messenging on/off
-    server.on("/enable_im", HTTP_GET, [](AsyncWebServerRequest *request){
-        im_enabled = true;
-        buzzerSequence(enable_sequence, 6);
-        request->send(200, "text/plain", "ok");
-        send_state_event();
-    });
-
-    // disable im
-    server.on("/disable_im", HTTP_GET, [](AsyncWebServerRequest *request){
-        buzzer_enabled = false;
-        buzzerSequence(disable_sequence, 6);
-        request->send(200, "text/plain", "ok");
-        send_state_event();
-    });
-
     // return the state for buzzer/im
     server.on("/get_state", HTTP_GET, [](AsyncWebServerRequest *request){
         sprintf(
@@ -144,6 +111,7 @@ void setup(){
 
     // set state
     server.on("/set_state", HTTP_GET, [](AsyncWebServerRequest *request){
+        buzzerSequence(set_state_sequence, 6);
         if(request->hasParam("im")) {
             im_enabled = String(request->getParam("im")->value()) == "true";
         }
