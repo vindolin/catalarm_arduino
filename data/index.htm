@@ -146,10 +146,11 @@ body {
 </style>
 
 <script>
-window.addEventListener('load', function() {
+window.addEventListener('load', () => {
     // lots of things here only work with an ES6 capable browser (Firefox, Chrome)
 
-    const local_ip = '192.168.178.126';  // used while developing this file and opening it from file:///home/me/project/index.htm
+    // const local_ip = '192.168.178.126';  // used while developing this file and opening it from file:///home/me/project/index.htm
+    const local_ip = '192.168.178.121';  // used while developing this file and opening it from file:///home/me/project/index.htm
     const host = location.hostname == '' ? local_ip : location.host;
 
     var state;
@@ -182,7 +183,7 @@ window.addEventListener('load', function() {
 
     function setup_events(checkbox) {
         for(var checkbox of document.getElementsByClassName('switch-input')) {
-            checkbox.addEventListener('change', function() {
+            checkbox.addEventListener('change', () => {
                 set_state();
             });
         }
@@ -196,7 +197,7 @@ window.addEventListener('load', function() {
         document.documentElement.style.background = 'red';
 
         // restore background
-        setTimeout(function() {
+        setTimeout(() => {
             document.documentElement.style.background = old_background;
         }, 200);
     }
